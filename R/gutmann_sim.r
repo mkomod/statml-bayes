@@ -28,15 +28,6 @@ Y <- mvtnorm::rmvnorm(N, mean = rep(0, P), sigma=A)
 
 
 # Estimator --------------------------------------------------------------------
-ln.p.n <- function(x) mvtnorm::dmvnorm(x, rep(0, P), A, log=TRUE)
-
-ln.p.m <- function(x, theta) {
-    A <- matrix(theta[1:(P^2)], nrow = P, byrow=TRUE)
-    B <- solve(A)
-    c <- theta[P^2 + 1]
-    return(-sum(apply(B, 1, function(b) sqrt(2) * abs(b %*% x))) + c)
-}
-
 p.n <- function(x) mvtnorm::dmvnorm(x, rep(0, P), A)
 
 p.m <- function(x, theta) {
@@ -50,11 +41,6 @@ p.m <- function(x, theta) {
 h <- function(x, theta) {
     return(p.m(x, theta) / (p.m(x, theta) + p.n(x)))
 }
-
-h <- function(x, theta) {
-    return( 1 / (1 + exp(ln.p.n(x) - ln.p.m(x, theta))) )
-}
-
 
 J <- function(theta) {
     T.x <- apply(X, 1, function(x) { log(h(x, theta)) })
@@ -70,8 +56,9 @@ J.Delta <- function(theta) {           # Gradient of J
 # Optimisation ----------------------------------------------------------------
 set.seed(201014)
 theta.init = c(runif(P^2), 0)          # Initial theta values
-opt <- optim(theta.init, fn=J, gr=J.Delta, method="CG", 
-	     control=list(fnscale=-1)         # fnscale=1 for max (min by def)
+opt <- optim(theta.init, fn=J, gr=J.Delta, 
+     method="CG",                      # Conjugate Gradient
+     control=list(fnscale=-1)          # fnscale=1 for max (min by def)
 )
 
 
