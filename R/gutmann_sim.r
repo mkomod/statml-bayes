@@ -14,7 +14,7 @@ Rcpp::sourceCpp("./rlaplace.cpp")
 
 
 # Settings ---------------------------------------------------------------------
-N <- 10^3                              # Number of data points
+N <- 10^2.4                              # Number of data points
 P <- 4                                 # Dimensionality of data
 
 
@@ -28,19 +28,33 @@ Y <- mvtnorm::rmvnorm(N, mean = rep(0, P), sigma=A)
 
 
 # Estimator --------------------------------------------------------------------
+ln.p.n <- function(x) mvtnorm::dmvnorm(x, rep(0, P), A, log=TRUE)
+
+ln.p.m <- function(x, theta) {
+    A <- matrix(theta[1:(P^2)], nrow = P, byrow=TRUE)
+    B <- solve(A)
+    c <- theta[P^2 + 1]
+    return(-sum(apply(B, 1, function(b) sqrt(2) * abs(b %*% x))) + c)
+}
+
 p.n <- function(x) mvtnorm::dmvnorm(x, rep(0, P), A)
 
 p.m <- function(x, theta) {
     A <- matrix(theta[1:(P^2)], nrow = P, byrow=TRUE)
     B <- solve(A)
     c <- theta[P^2 + 1]
-    ln.p.m0 <- -sum(apply(B, 1, function(b) sqrt(2) * abs(b %*% x)))
-    return(exp(ln.p.m0 + c))
+    ln.pm.0 <- -sum(apply(B, 1, function(b) sqrt(2) * abs(b %*% x)))
+    return(exp(ln.pm.0 + c))
 }
 
 h <- function(x, theta) {
     return(p.m(x, theta) / (p.m(x, theta) + p.n(x)))
 }
+
+h <- function(x, theta) {
+    return( 1 / (1 + exp(ln.p.n(x) - ln.p.m(x, theta))) )
+}
+
 
 J <- function(theta) {
     T.x <- apply(X, 1, function(x) { log(h(x, theta)) })
@@ -55,14 +69,16 @@ J.Delta <- function(theta) {           # Gradient of J
 
 # Optimisation ----------------------------------------------------------------
 set.seed(201014)
-theta.init = c(runif(P^2), -1)
-opt <- optim(theta.init, J)
+theta.init = c(runif(P^2), 0)          # Initial theta values
+opt <- optim(theta.init, fn=J, gr=J.Delta, method="CG", 
+	     control=list(fnscale=-1)         # fnscale=1 for max (min by def)
+)
 
 
 # Results ---------------------------------------------------------------------
 mse <- function(theta, theta.p) mean((theta - theta.p) ^ 2)
 theta.p  <- c(as.vector(A), log(abs(det(solve(A))) / 4))
 theta.hat <- opt$par
-log(mse(theta.hat, theta.p))
 
+log10(mse(theta.hat, theta.p))
 
