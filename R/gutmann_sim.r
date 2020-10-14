@@ -14,7 +14,7 @@ Rcpp::sourceCpp("./rlaplace.cpp")
 
 
 # Settings ---------------------------------------------------------------------
-N <- 10^2.4                              # Number of data points
+N <- 10^2.4                            # Number of data points
 P <- 4                                 # Dimensionality of data
 
 
