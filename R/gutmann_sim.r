@@ -15,7 +15,8 @@ Rcpp::sourceCpp("./rlaplace.cpp")
 
 # Settings ---------------------------------------------------------------------
 N <- 1.5e2                             # Number of data points
-P <- 2
+P <- 2                                 # Dimensionality of data
+
 
 # Data -------------------------------------------------------------------------
 A <- diag(1, P)                        # Covariance Matrix
