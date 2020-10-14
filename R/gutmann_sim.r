@@ -14,8 +14,8 @@ Rcpp::sourceCpp("./rlaplace.cpp")
 
 
 # Settings ---------------------------------------------------------------------
-N <- 1.5e2                             # Number of data points
-P <- 2                                 # Dimensionality of data
+N <- 10^3                              # Number of data points
+P <- 4                                 # Dimensionality of data
 
 
 # Data -------------------------------------------------------------------------
@@ -63,6 +63,6 @@ opt <- optim(theta.init, J)
 mse <- function(theta, theta.p) mean((theta - theta.p) ^ 2)
 theta.p  <- c(as.vector(A), log(abs(det(solve(A))) / 4))
 theta.hat <- opt$par
-mse(theta.hat, theta.p)
+log(mse(theta.hat, theta.p))
 
 
