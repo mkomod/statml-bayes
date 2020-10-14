@@ -6,7 +6,7 @@ double laplaceInvCdf(double p, double m, double s);
 
 // [[Rcpp::export]]
 Rcpp::NumericVector
-rlaplace(const int n, const double m=1, const double sd = 1) {
+rlaplace(const int n, const double m=0, const double sd = 1) {
     Rcpp::NumericVector unif_vals = Rcpp::runif(n);
     Rcpp::NumericVector vals(n);
     for (int i = 0; i < unif_vals.size(); ++i) {
