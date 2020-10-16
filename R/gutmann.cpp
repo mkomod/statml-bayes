@@ -3,7 +3,7 @@
 
 using namespace Rcpp;
 
-double lnpm(NumericVector x, NumericVector b, double c);
+double lnpm0(NumericVector x, NumericVector b);
 double lnpn(NumericVector y);
 
 // [[Rcpp::depends(RcppArmadillo)]]
@@ -31,11 +31,12 @@ double J(NumericVector theta, NumericMatrix X, NumericMatrix Y) {
 	double py = 0;
 	for (int j = 0; j < P; ++j) {
 	    for (int k = 0; k < P; ++k) {
-		b[k] = B(j, k);
+		b[k] = B(j, k);			// vector b
 	    }
-	    px = lnpm(X(i, _), b, c);
-	    py = lnpm(Y(i, _), b, c);
+	    px += lnpm0(X(i, _), b);
+	    py += lnpm0(Y(i, _), b);
 	}
+	px += c; py += c;			// add on c
 	double qx = lnpn(x);
 	double qy = lnpn(y);
 	double hx = 1.0 / (1.0 + exp(qx - px));
@@ -47,12 +48,12 @@ double J(NumericVector theta, NumericMatrix X, NumericMatrix Y) {
 
 
 double
-lnpm(NumericVector x, NumericVector b, double c) {
+lnpm0(NumericVector x, NumericVector b) {
     double t = 0;
     for (int i = 0; i < x.size(); ++i) {
 	t += std::abs(x[i] * b[i]);
     }
-    return -sqrt(2) * t + c;
+    return -sqrt(2) * t;
 }
 
 double
