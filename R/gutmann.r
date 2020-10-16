@@ -4,32 +4,45 @@ library(parallel)
 Rcpp::sourceCpp("rlaplace.cpp")
 Rcpp::sourceCpp("gutmann.cpp")
 
-CORES <- 4
+CORES <- 20
+NUM_DATASETS <- 600
+NUM_START_VALS <- 10
+
+set.seed(2020)
+
+generate_data <- function(N) {
+    A <- matrix(c(rnorm(4, 0, 0.1), rnorm(4, 3, 0.1),
+		  rnorm(4, -2, 0.1), rnorm(4, 1, 0.1)), nrow=4)
+    X <- matrix(rlaplace(4 * N), nrow=N) %*% A
+    Y <- matrix(rnorm(4 *  N), nrow=N)
+    return(list(X=X, Y=Y, A=A))
+}
 
 vals <- mclapply(seq(2, 4, length.out=CORES), function (samp.exp) {
-    val <- c()
-    for (i in 1:700) {
+    res <- matrix(0, nrow=NUM_DATASETS, ncol=NUM_START_VALS)
+
+    for (i in 1:NUM_DATASETS) {
+	# Generate the data for this run
 	l <- generate_data(10^samp.exp)
-	X <- l$X; Y <- l$Y
-	for (j in 1:5) {
-	    theta.init <- rnorm(17, sd=3)
+	X <- l$X; Y <- l$Y; A <- l$A
+	for (j in 1:NUM_START_VALS) {
+	    theta.init <- c(rnorm(16, 1, sd=2.2), runif(1, -10, -1))
 	    tryCatch({
 		opt <- optim(theta.init, J, method="CG", X=X, Y=Y)
 		theta.p <- c(t(A), log(abs(det(solve(A)))/4))
-		val[i*(j-1) + i] <- mean((theta.p - opt$par)^2)
+		res[i, j] <- mean((theta.p - opt$par)^2)
+		cat(".")
 	    }, error = function(e) {
-		val[i*(j-1) + i] <- NA
+		# On error set value to NA
+		print(e)
+		res[i, j] <- NA
+		cat("x")
 	    })
 	}
     }
-    return(val)
+    res[res == 0] <- NA
+    return(res)
 }, mc.cores=CORES)
 
-generate_data <- function(N) {
-    A <- matrix(c(rnorm(4, 0, 0.1), rnorm(4, 3, 0.1), 
-		  rnorm(4, 0, 0.1), rnorm(4, -3, 0.1)) , nrow=4)
-    X <- matrix(rlaplace(4 * N), nrow=N) %*% A
-    Y <- matrix(rnorm(4 *  N), nrow=N)
-    return(list(X=X, Y=Y))
-}
+save(vals, file="vals.RData")
 
