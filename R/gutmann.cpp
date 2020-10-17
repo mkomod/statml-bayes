@@ -1,19 +1,19 @@
 #include <cmath>
-#include <RcppArmadillo.h>
+#include <RcppArmadillo.h> 
+// [[Rcpp::depends(RcppArmadillo)]]
 
 using namespace Rcpp;
 
-double lnpm0(NumericVector x, NumericVector b);
-double lnpn(NumericVector y);
+double lnpm0(arma::vec x, arma::rowvec b);
+double lnpn(arma::vec y, arma::mat S_ing, double log_NormalisingConst);
 
-// [[Rcpp::depends(RcppArmadillo)]]
 
 // [[Rcpp::export]]
-double J(NumericVector theta, NumericMatrix X, NumericMatrix Y) {
+double J(NumericVector theta, NumericMatrix X, NumericMatrix Y, 
+	arma::mat S_inv, double log_NormalisingConst) {
     int P = X.ncol();
     int N = X.nrow();
     double c = theta(std::pow(P, 2));
-
     arma::mat A(P, P);
     for (int i = 0; i < P; ++i) {
 	for (int j = 0; j < P; ++j) {
@@ -22,42 +22,39 @@ double J(NumericVector theta, NumericMatrix X, NumericMatrix Y) {
     }    
     arma::mat B = A.i();			// Invert
 
-    double t = 0;
+    arma::vec x(P);
+    arma::vec y(P);  
+    arma::rowvec b(P);
+    double t = 0, qx, qy, px, py, hx, hy;
     for (int i = 0; i < N; ++i) {
-	NumericVector x = X.row(i);
-	NumericVector y = Y.row(i);
-	NumericVector b(4);
-	double px = 0;
-	double py = 0;
+	x = X.row(i);
+	y = Y.row(i);
 	for (int j = 0; j < P; ++j) {
-	    for (int k = 0; k < P; ++k) {
-		b[k] = B(j, k);			// vector b
-	    }
-	    px += lnpm0(X(i, _), b);
-	    py += lnpm0(Y(i, _), b);
+	    b = B.row(j);
+	    px += lnpm0(x, b);
+	    py += lnpm0(y, b);
 	}
 	px += c; py += c;			// add on c
-	double qx = lnpn(x);
-	double qy = lnpn(y);
-	double hx = 1.0 / (1.0 + exp(qx - px));
-	double hy = 1.0 / (1.0 + exp(qy - py));
-	t = t + std::log(hx) + std::log(1.0 - hy);
+	qx = lnpn(x, S_inv, log_NormalisingConst);
+	qy = lnpn(y, S_inv, log_NormalisingConst);
+	hx = 1.0 / (1.0 + exp(qx - px));
+	hy = 1.0 / (1.0 + exp(qy - py));
+	t += std::log(hx) + std::log(1.0 - hy);
     }
     return -t;
 }
 
 
 double
-lnpm0(NumericVector x, NumericVector b) {
-    double t = 0;
-    for (int i = 0; i < x.size(); ++i) {
-	t += std::abs(x[i] * b[i]);
-    }
-    return -sqrt(2) * t;
+lnpm0(arma::vec x, arma::rowvec b) {
+    double t = -sqrt(2) * arma::dot(x, b);	// dot product of a, b
+    return t;
 }
 
 double
-lnpn(NumericVector y) {
-    double t = sum(dnorm(y, true));
+lnpn(arma::vec y, arma::mat S_inv, double log_NormalisingConst) {
+    arma::mat yt = y.t();
+    arma::mat a = (yt * S_inv * y);
+    double t = a(0, 0) - log_NormalisingConst;
     return t;
 }
