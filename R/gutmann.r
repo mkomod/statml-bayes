@@ -10,7 +10,7 @@ NUM_START_VALS <- 2
 
 set.seed(2020)
 
-N <- 10^2
+
 generate_data <- function(N) {
     A <- matrix(c(rnorm(4, 5, 1), rnorm(4, 3, 0.1),
 		  rnorm(4, 8, 0.1), rnorm(4, 1, 0.1)), nrow=4)
@@ -20,37 +20,54 @@ generate_data <- function(N) {
 }
 
 
+generate_intial_theta <- function() {
+    return(c(rnorm(16, 1, sd=2.2), runif(1, -10, -1)))
+}
+
+
 vals <- mclapply(seq(2, 4, length.out=CORES), function (samp.exp) {
-    samp.exp <- round(samp.exp)
+    samp.exp <- round(samp.exp)        # round sample size to int
     res <- matrix(0, nrow=NUM_DATASETS, ncol=NUM_START_VALS)
 
     for (i in 1:NUM_DATASETS) {
 	# Generate the data for this run
 	l <- generate_data(10^samp.exp)
-	X <- l$X; Y <- l$Y; A <- l$A
+	X <- l$X; Y <- l$Y; A <- l$A          # Unpack list
+
+	# Needed for normal density
 	S <- A %*% t(A)
 	S_inv <- solve(S);
 	lNC <- log(sqrt((2 * pi)^4 * det(S) ))
+	
+	# Theta values used to generate the data and Normalising constant
+	theta.p <- c(t(A), log(abs(det(solve(A)))/4))
 
+	# Solve for different starting values and save MSE
 	for (j in 1:NUM_START_VALS) {
-	    theta.init <- c(rnorm(16, 1, sd=2.2), runif(1, -10, -1))
 	    tryCatch({
-		opt <- optim(theta.init, J, method="CG", 
-		    X=X, Y=Y, S_inv=S_inv, log_NormalisingConst=lNC)
-		theta.p <- c(t(A), log(abs(det(solve(A)))/4))
+		theta.init <- generate_intial_theta()
+		opt <- optim(theta.init, J, 
+		    method="CG", 
+		    X=X, 
+		    Y=Y, 
+		    S_inv=S_inv, 
+		    log_NormalisingConst=lNC
+		)
 		res[i, j] <- mean((theta.p - opt$par)^2)
 		cat(".")
 	    }, error = function(e) {
-		# On error set value to NA
-		print(e)
-		res[i, j] <- NA
+		# print(e)
+		res[i, j] <- NA	                     # Sets value to 0 not NA
 		cat("x")
 	    })
 	}
-    }
 
-    res[res == 0] <- NA
+    }
+    res[res == 0] <- NA                # Set 0s to NA
     return(res)
+
 }, mc.cores=CORES)
 
-save(vals, file="vals.RData")
+
+save(vals, file="vals.RData")          # Save data for later use
+
