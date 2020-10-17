@@ -4,24 +4,26 @@ library(parallel)
 Rcpp::sourceCpp("rlaplace.cpp")
 Rcpp::sourceCpp("gutmann.cpp")
 
-CORES <- 4
-NUM_DATASETS <- 5
+CORES <- 2
+NUM_DATASETS <- 2
 NUM_START_VALS <- 2
 
 set.seed(2020)
 
 
 generate_data <- function(N) {
-    A <- matrix(c(rnorm(4, 5, 1), rnorm(4, 3, 0.1),
-		  rnorm(4, 8, 0.1), rnorm(4, 1, 0.1)), nrow=4)
+    A <- matrix(round(c(rnorm(4, 5, 1), rnorm(4, 3, 1),
+		  rnorm(4, 4, 1), rnorm(4, 7, 1))), nrow=4)
     X <- matrix(rlaplace(4 * N), nrow=N) %*% A
     Y <- matrix(rnorm(4 *  N), nrow=N)
     return(list(X=X, Y=Y, A=A))
 }
 
-
 generate_intial_theta <- function() {
-    return(c(rnorm(16, 1, sd=2.2), runif(1, -10, -1)))
+    return(c(
+	     round(runif(16, 3, 8), 1), 
+	     runif(1, -8, -1)
+    ))
 }
 
 
@@ -56,7 +58,7 @@ vals <- mclapply(seq(2, 4, length.out=CORES), function (samp.exp) {
 		res[i, j] <- mean((theta.p - opt$par)^2)
 		cat(".")
 	    }, error = function(e) {
-		# print(e)
+		print(e)
 		res[i, j] <- NA	                     # Sets value to 0 not NA
 		cat("x")
 	    })
