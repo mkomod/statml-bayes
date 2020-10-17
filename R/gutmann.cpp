@@ -45,16 +45,18 @@ double J(NumericVector theta, NumericMatrix X, NumericMatrix Y,
 }
 
 
+// [[Rcpp::export]]
 double
 lnpm0(arma::vec x, arma::rowvec b) {
     double t = -sqrt(2) * arma::dot(x, b);	// dot product of a, b
     return t;
 }
 
+// [[Rcpp::export]]
 double
 lnpn(arma::vec y, arma::mat S_inv, double log_NormalisingConst) {
     arma::mat yt = y.t();
     arma::mat a = (yt * S_inv * y);
-    double t = a(0, 0) - log_NormalisingConst;
+    double t = -1.0/2.0 * a(0, 0) - log_NormalisingConst;
     return t;
 }

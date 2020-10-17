@@ -30,7 +30,7 @@ vals <- mclapply(seq(2, 4, length.out=CORES), function (samp.exp) {
 	X <- l$X; Y <- l$Y; A <- l$A
 	S <- A %*% t(A)
 	S_inv <- solve(S);
-	lNC <- log( (2 * pi)^4 * det(S) )
+	lNC <- log(sqrt((2 * pi)^4 * det(S) ))
 
 	for (j in 1:NUM_START_VALS) {
 	    theta.init <- c(rnorm(16, 1, sd=2.2), runif(1, -10, -1))
