@@ -4,8 +4,8 @@
 
 using namespace Rcpp;
 
-double lnpm0(arma::vec x, arma::rowvec b);
-double lnpn(arma::vec y, arma::mat S_ing, double log_NormalisingConst);
+double lnpm0(arma::rowvec x, arma::rowvec b);
+double lnpn(arma::rowvec y, arma::mat S_ing, double log_NormalisingConst);
 
 
 // [[Rcpp::export]]
@@ -22,8 +22,8 @@ double J(NumericVector theta, NumericMatrix X, NumericMatrix Y,
     }    
     arma::mat B = A.i();			// Invert
 
-    arma::vec x(P);
-    arma::vec y(P);  
+    arma::rowvec x(P);
+    arma::rowvec y(P);  
     arma::rowvec b(P);
     double t = 0, qx, qy, px, py, hx, hy;
     for (int i = 0; i < N; ++i) {
@@ -35,28 +35,30 @@ double J(NumericVector theta, NumericMatrix X, NumericMatrix Y,
 	    py += lnpm0(y, b);
 	}
 	px += c; py += c;			// add on c
-	qx = lnpn(x, S_inv, log_NormalisingConst);
-	qy = lnpn(y, S_inv, log_NormalisingConst);
-	hx = 1.0 / (1.0 + exp(qx - px));
-	hy = 1.0 / (1.0 + exp(qy - py));
+	px = exp(px); py = exp(py);
+	qx = exp(lnpn(x, S_inv, log_NormalisingConst));
+	qy = exp(lnpn(y, S_inv, log_NormalisingConst));
+	hx = px / (px - qx);
+	hy = py / (py - qy);
+	Rcout << "hx: " << hx << " hy: " << hy;
 	t += std::log(hx) + std::log(1.0 - hy);
     }
-    return -t;
+    return -t / (2 * N);
 }
 
 
 // [[Rcpp::export]]
 double
-lnpm0(arma::vec x, arma::rowvec b) {
+lnpm0(arma::rowvec x, arma::rowvec b) {
     double t = -sqrt(2) * arma::dot(x, b);	// dot product of a, b
     return t;
 }
 
 // [[Rcpp::export]]
 double
-lnpn(arma::vec y, arma::mat S_inv, double log_NormalisingConst) {
+lnpn(arma::rowvec y, arma::mat S_inv, double log_NormalisingConst) {
     arma::mat yt = y.t();
-    arma::mat a = (yt * S_inv * y);
+    arma::mat a = (y * S_inv * yt);
     double t = -1.0/2.0 * a(0, 0) - log_NormalisingConst;
     return t;
 }
