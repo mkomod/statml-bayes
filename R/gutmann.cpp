@@ -35,12 +35,10 @@ double J(NumericVector theta, NumericMatrix X, NumericMatrix Y,
 	    py += lnpm0(y, b);
 	}
 	px += c; py += c;			// add on c
-	px = exp(px); py = exp(py);
-	qx = exp(lnpn(x, S_inv, log_NormalisingConst));
-	qy = exp(lnpn(y, S_inv, log_NormalisingConst));
-	hx = px / (px - qx);
-	hy = py / (py - qy);
-	Rcout << "hx: " << hx << " hy: " << hy;
+	qx = lnpn(x, S_inv, log_NormalisingConst);
+	qy = lnpn(y, S_inv, log_NormalisingConst);
+	hx = 1.0 / (1.0 + exp(qx - px));
+	hy = 1.0 / (1.0 + exp(qy - py));
 	t += std::log(hx) + std::log(1.0 - hy);
     }
     return -t / (2 * N);
