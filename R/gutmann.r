@@ -6,8 +6,8 @@ Rcpp::sourceCpp("rlaplace.cpp")
 Rcpp::sourceCpp("gutmann.cpp")
 
 CORES <- 1
-NUM_DATASETS <- 1
-NUM_START_VALS <- 1
+NUM_DATASETS <- 200
+NUM_START_VALS <- 5
 
 set.seed(2020)
 
@@ -18,9 +18,9 @@ generate_data <- function(N) {
 	tryCatch({
 	    A <- matrix(round(c(runif(4, 4, 6), runif(4, 6, 8),
 				runif(4, 4, 6), runif(4, 3, 5)), 1), nrow=4)
-	    X <- matrix(rlaplace(4 * N), nrow=N) %*% A
+	    X <- matrix(rlaplace(4 * N), nrow=N) %*% t(A)
 	    S <- A %*% t(A)
-	    Y <- matrix(rmvnorm(N, rep(0, 4), S), nrow=N)
+	    Y <- matrix(rmvnorm(N, rep(0, 4), S), nrow=N, byrow=T)
 	    E <- FALSE
 	}, error = function(e) { E <- TRUE })
     }	
@@ -66,7 +66,7 @@ vals <- mclapply(seq(3, 3, length.out=CORES), function (samp.exp) {
 		res[i, j] <- mean((theta.p - opt$par)^2)
 		cat(".")
 	    }, error = function(e) {
-		print(e)
+		# print(e)
 		res[i, j] <- NA	                     # Sets value to 0 not NA
 		cat("x")
 	    })
