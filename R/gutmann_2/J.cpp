@@ -11,15 +11,15 @@ double pn(arma::rowvec x);
 double J(arma::rowvec theta, arma::mat X, arma::mat Y) {
     int N = X.n_rows;
     int P = X.n_cols;
-    
-    double t=0;
+    double c = theta(0); 
+    double t = 0;
     arma::rowvec x, y;
     for (int i=0; i < N; ++i) {
 	x = X.row(i);
 	y = Y.row(i);
 	t += std::log(h(x, theta)) + std::log(1 - h(y, theta));
     }
-    return -t / (2.0 * N);
+    return -t / (2*N);
 }
 
 double h(arma::rowvec x, arma::rowvec theta) {
@@ -30,17 +30,16 @@ double h(arma::rowvec x, arma::rowvec theta) {
 // [[Rcpp::export]]
 double pm(arma::rowvec x, arma::rowvec theta) {
     double x_ = x(0);
-    double m = 0;
     double b = 1 / std::sqrt(2);
     double c = theta(0);
-    double t = c * 1 / (2 * b) * std::exp(- std::abs(x_ - m) / b);
+    double t = 1 / (2 * b) * std::exp(- std::abs(x_) / b) / c;
     return t;
 }
 
 // [[Rcpp::export]]
 double pn(arma::rowvec x) {
     int P = x.n_rows;
-    double res = std::exp(dot(x, x))/std::sqrt( std::pow(2 * PI, P));
-    return  res;
+    double res = std::exp(-dot(x, x)/2)/std::sqrt( std::pow(2 * PI, P));
+    return res;
 }
 
