@@ -32,14 +32,15 @@ double pm(arma::rowvec x, arma::rowvec theta) {
     double x_ = x(0);
     double b = 1 / std::sqrt(2);
     double c = theta(0);
-    double t = 1 / (2 * b) * std::exp(- std::abs(x_) / b) / c;
+    double t = std::exp(-std::sqrt(2) * arma::sum(arma::abs(x))) * c;
     return t;
 }
 
 // [[Rcpp::export]]
 double pn(arma::rowvec x) {
-    int P = x.n_rows;
-    double res = std::exp(-dot(x, x)/2)/std::sqrt( std::pow(2 * PI, P));
+    double P = x.n_cols;
+    double res = std::exp(-dot(x, x)/2.0) / 
+	std::pow(2*arma::datum::pi, P/2.0);
     return res;
 }
 
