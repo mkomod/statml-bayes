@@ -25,7 +25,7 @@ double J(NumericVector theta, NumericMatrix X, NumericMatrix Y,
     arma::rowvec x(P);
     arma::rowvec y(P);  
     arma::rowvec b(P);
-    double t = 0, qx, qy, px, py, hx, hy;
+    double t, qx, qy, px, py, hx, hy = 0;
     for (int i = 0; i < N; ++i) {
 	x = X.row(i);
 	y = Y.row(i);
