@@ -1,12 +1,12 @@
 library(Rcpp)
 library(mvtnorm)
-library(RColorBrewer)
+library(parallel)
 
 Rcpp::sourceCpp("rlaplace.cpp")
 Rcpp::sourceCpp("J.cpp")
 
 P <- 4
-NS <- round(10^seq(2, 4, length.out=8))
+NS <- round(10^seq(3.5, 4, length.out=2))
 res <- mclapply(NS, function(N) {
     r <- data.frame(N=numeric(), run=numeric(), s=numeric(), val=numeric(), 
 		    mse=numeric(), t=numeric())
