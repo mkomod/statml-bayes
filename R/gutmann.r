@@ -6,11 +6,11 @@ Rcpp::sourceCpp("rlaplace.cpp")
 Rcpp::sourceCpp("J.cpp")
 
 P <- 4
-NS <- round(10^seq(2, 4.5, length.out=11))
+NS <- round(10^seq(2, 4, length.out=8))
 res <- mclapply(NS, function(N) {
     r <- data.frame(N=numeric(), run=numeric(), s=numeric(), val=numeric(), 
 		    mse=numeric(), t=numeric())
-    for (run in 1:500) {
+    for (run in 1:100) {
 	A <- matrix(runif(16, 0, 10), nrow=4)
 	S <- A %*% t(A)
 	X <- matrix(rlaplace(N * P), ncol=P) %*% A
@@ -30,9 +30,9 @@ res <- mclapply(NS, function(N) {
 
 	}
     }
+    cat(N, "done\n")
+    assign(paste0("r_", N), r)
+    save(list=paste0("r_", N), file=paste0("r_", N, ".RData"))
     return(r)
 }, mc.cores=length(NS))
-
-
-save(res, file="res.RData")
 
